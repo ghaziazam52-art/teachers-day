@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A Timeless Tribute | Teacher's Day</title>
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400&family=Syne:wght@700;800&family=Lora:ital@0;1&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Geist+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- GSAP for Cinematic Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --accent-color: #d4af37;
+            --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-blur: 30px;
+            --font-display: 'Playfair Display', serif;
+            --font-body: 'Outfit', sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: var(--bg-color);
+            color: var(--text-color); font-family: var(--font-body);
+            user-select: none;
+        }
+
+        /* Cursor Glow */
+        #cursor-glow {
+            position: fixed; width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.07) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+            transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s;
+        }
+
+        #canvas-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; filter: blur(1px);
+        }
+
+        .scene {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            padding: 2rem; opacity: 0; visibility: hidden;
+            pointer-events: none; z-index: 10;
+            text-align: center; transition: opacity 1.5s ease, visibility 1.5s;
+        }
+
+        .scene.active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+        /* Luxury Glass */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 40px; padding: 3rem 2.5rem;
+            max-width: 600px; width: 100%;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.02);
+            position: relative; overflow: hidden;
+        }
+
+        .gold-text {
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .cinematic-text {
+            font-size: 1.1rem; letter-spacing: 0.4rem; text-transform: uppercase;
+            opacity: 0.7; font-weight: 300; font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Code Entry */
+        .code-container { display: flex; justify-content: center; gap: 15px; margin: 3rem 0; }
+        .code-box {
+            width: 60px; height: 75px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border); border-radius: 16px;
+            text-align: center; font-size: 2rem; font-family: 'JetBrains Mono', monospace;
+            color: white; outline: none; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .code-box:focus {
+            background: rgba(255,255,255,0.15); border-color: var(--accent-color);
+            transform: translateY(-10px) scale(1.1); box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        .btn-luxury {
+            background: white; color: black; border: none; padding: 1.2rem 2.5rem;
+            border-radius: 20px; font-weight: 600; font-size: 1.1rem; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2); width: 100%;
+        }
+        .btn-luxury:hover { transform: scale(1.03); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+
+        /* Teacher Reveal */
+        .teacher-name {
+            font-size: 4rem; margin-bottom: 1rem; font-family: var(--font-display);
+            line-height: 1.1; text-wrap: balance;
+        }
+        .teacher-designation {
+            font-size: 1.4rem; opacity: 0.6; margin-bottom: 3rem; font-weight: 300;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+        .message-container {
+            font-size: 1.3rem; line-height: 1.8; text-align: left;
+            margin-bottom: 3rem; font-family: 'Lora', serif; font-style: italic;
+        }
+        .message-line {
+            opacity: 0; transform: translateY(20px);
+            margin-bottom: 1.5rem; display: block;
+        }
+
+        .special-badge {
+            background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 1.5rem; border-radius: 24px; margin-bottom: 3rem;
+            font-weight: 600; font-style: normal;
+        }
+
+        /* Final Card */
+        .final-signature {
+            border-top: 1px solid var(--glass-border); padding-top: 2rem; margin-top: 2rem;
+            opacity: 0; transform: translateY(20px);
+        }
+
+        /* Admin */
+        #admin-view {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fdfdfd; color: #111; overflow-y: auto; padding: 4rem 2rem; z-index: 2000;
+        }
+        .admin-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem; max-width: 1200px; margin: 0 auto;
+        }
+        .admin-card {
+            background: white; padding: 2rem; border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eee; text-align: center;
+        }
+        .qr-code { display: flex; justify-content: center; margin: 2rem 0; }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .teacher-name { font-size: 2.5rem; }
+            .glass-panel { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="cursor-glow"></div>
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- Audio -->
+    <audio id="bg-music" loop>
+        <source src="https://cdn.pixabay.com/audio/2022/05/27/audio_1808f37953.mp3" type="audio/mpeg">
+    </audio>
+    <div class="audio-control" id="sound-toggle" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 100; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.7rem 1.2rem; border-radius: 30px; cursor: pointer; font-size: 0.8rem; transition: 0.3s;">
+        <span id="sound-text">♪ Sound Off</span>
+    </div>
+
+    <!-- Scene 1: Cinematic Intro -->
+    <div class="scene" id="scene-intro">
+        <div id="intro-sequence">
+            <div class="cinematic-text" id="intro-1" style="opacity: 0;">FOR SOMEONE SPECIAL...</div>
+            <div class="cinematic-text" id="intro-2" style="opacity: 0; position: absolute; left: 0; right: 0; width: 100%;">WHO MAKES SCHOOL A LITTLE MORE MEANINGFUL.</div>
+            <div class="cinematic-text" id="intro-3" style="opacity: 0; position: absolute; left: 0; right: 0; width: 100%;">HAPPY TEACHER'S DAY</div>
+            <div class="cinematic-text" id="intro-4" style="opacity: 0; position: absolute; left: 0; right: 0; width: 100%; font-size: 0.8rem;">A LITTLE SURPRISE IS WAITING FOR YOU.</div>
+        </div>
+    </div>
+
+    <!-- Scene 2: Code Entry -->
+    <div class="scene" id="scene-entry">
+        <div class="glass-panel">
+            <div class="cinematic-text">Identity Verification</div>
+            <h2 class="gold-text" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Who are you?</h2>
+            <p style="opacity: 0.6; margin-bottom: 2rem;">Enter your personal 4-character code.</p>
+            <div class="code-container">
+                <input type="text" maxlength="1" class="code-box" data-index="0">
+                <input type="text" maxlength="1" class="code-box" data-index="1">
+                <input type="text" maxlength="1" class="code-box" data-index="2">
+                <input type="text" maxlength="1" class="code-box" data-index="3">
+            </div>
+            <button class="btn-luxury" id="reveal-btn">Unlock Experience ✨</button>
+            <p style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.4; cursor: pointer;" id="skip-to-qr">Personal QR Access</p>
+        </div>
+    </div>
+
+    <!-- Scene 3: Teacher Reveal -->
+    <div class="scene" id="scene-reveal">
+        <div class="glass-panel" style="max-width: 800px; text-align: center;">
+            <div class="teacher-name gold-text" id="t-name">---</div>
+            <div class="teacher-designation" id="t-designation">---</div>
+            <div class="message-container" id="t-messages"></div>
+            <div class="special-badge hidden" id="t-special"></div>
+            <div class="final-signature" id="t-final">
+                <div class="cinematic-text" style="font-size: 0.7rem; margin-bottom: 1rem;">With deepest respect,</div>
+                <div style="font-size: 1.5rem; font-family: var(--font-display); margin-bottom: 0.5rem;">— Ghazi Azam, IX</div>
+                <div style="opacity: 0.5; font-size: 0.9rem;">Seth M.R. Jaipuria School</div>
+                <div class="gold-text" style="margin-top: 2rem; font-size: 1.2rem; letter-spacing: 2px;">HAPPY TEACHER'S DAY ❤️</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin View -->
+    <div id="admin-view">
+        <div style="text-align: center; margin-bottom: 4rem;">
+            <h1 class="gold-text" style="font-size: 3rem;">Admin Control Center</h1>
+            <p>Generating bespoke access keys for faculty.</p>
+            <button class="btn-luxury" style="width: auto; margin-top: 1rem;" onclick="document.getElementById('admin-view').style.display='none'">Exit Admin</button>
+        </div>
+        <div class="admin-grid" id="admin-grid"></div>
+    </div>
+
+    <script>
+        const TEACHERS = {
+            "PKSH": {
+                name: "PRASHANT KUMAR SHARMA SIR",
+                designation: "Physics Teacher",
+                theme: "physics",
+                message: [
+                    "You don't just teach us the laws of Physics; you teach us how to challenge the limits of the possible.",
+                    "Your passion for the universe is contagious, transforming a complex syllabus into a journey of discovery.",
+                    "Thank you for being the catalyst that sparks curiosity and the force that keeps us moving forward."
+                ],
+                specialLine: "Some teachers teach formulas. Some teach us how to understand the world behind them.",
+                emojiSet: ["⚛️", "🚀", "🪐", "✨", "🌌"]
+            },
+            "PKUM": {
+                name: "PRASHANT KUMAR SIR",
+                designation: "Economics Teacher",
+                theme: "economics",
+                message: [
+                    "In the science of scarcity, your patience and wisdom are the only resources that feel truly infinite.",
+                    "You've taught us that the real value of education isn't in the numbers, but in the perspective we gain.",
+                    "Thank you for bringing discipline, clarity, and a world of understanding to every single lecture."
+                ],
+                specialSection: { type: "funny", content: "ROI Analysis: Investing in your class has given us the highest intellectual returns! 📈" },
+                emojiSet: ["📈", "₹", "🏦", "💎", "📊"]
+            },
+            "SWAT": {
+                name: "SWATI MA'AM",
+                designation: "English Teacher",
+                theme: "english",
+                message: [
+                    "To the mentor who showed us that English is not just a subject, but a canvas for our soul's expression.",
+                    "Your warmth and friendly spirit turn the classroom into a sanctuary of creativity and laughter.",
+                    "Thank you for teaching us to find our voice and for being the kind of teacher we can truly trust."
+                ],
+                specialSection: { type: "funny", content: "Grammar check: 'Coolest Teacher' = Swati Ma'am. (Verified & Validated) 💅" },
+                emojiSet: ["📖", "✍️", "🌟", "🎭", "🦋"]
+            },
+            "ANSH": {
+                name: "ANSHITA MA'AM",
+                designation: "EVS Teacher",
+                theme: "nature",
+                message: [
+                    "Your kindness is like a gentle rain—it nourishes everyone it touches, regardless of where they stand.",
+                    "I deeply treasure the genuine conversations and the quiet strength you bring to our school environment.",
+                    "Thank you for reminding us that the most important lesson in life is to be respectful and kind to all."
+                ],
+                specialLine: "Some people make a difference simply by being kind.",
+                emojiSet: ["🌿", "🌸", "🍃", "☀️", "🌍"]
+            },
+            "ANCH": {
+                name: "ANCHAL MA'AM",
+                designation: "Co-ordinator",
+                theme: "coordinator",
+                message: [
+                    "The harmony of a school depends on its conductor, and you lead us with unmatched energy and grace.",
+                    "Thank you for being the bridge between discipline and friendliness, and for always having our backs.",
+                    "Your frankness is refreshing, and your support is the foundation we all lean on."
+                ],
+                specialSection: { type: "funny", content: "Admin Status: 100% Cool, 100% Frank, 100% Essential. 😎" },
+                emojiSet: ["⚡", "🎯", "✨", "📋", "🔥"]
+            },
+            "SART": {
+                name: "SARTHAK SIR",
+                designation: "Co-ordinator & Physics Teacher",
+                theme: "precision",
+                message: [
+                    "To balance the rigor of Physics with the complexity of leadership is a feat only a few can master.",
+                    "Thank you for guiding us with a perfect equilibrium of scientific logic and professional elegance.",
+                    "Your ability to be both a strict mentor and a friendly guide is truly an inspiration to us all."
+                ],
+                specialLine: "A masterclass in leadership and knowledge.",
+                emojiSet: ["⚛️", "📐", "⚙️", "🌟", "⚡"]
+            },
+            "AMRI": {
+                name: "AMRIT SIR",
+                designation: "Chemistry Teacher",
+                theme: "chemistry",
+                message: [
+                    "Chemistry is the study of bonds, and the bond you've built with your students is the strongest one we know.",
+                    "You've turned the laboratory of learning into a place of laughter, discovery, and genuine friendship.",
+                    "Thank you for being the catalyst that makes learning feel like an adventure rather than a chore."
+                ],
+                specialSection: { type: "funny", content: "Lab Report: High levels of 'Coolness' detected. Reaction: Pure Joy! 😂" },
+                emojiSet: ["🧪", "⚗️", "💥", "🌈", "🧬"]
+            },
+            "CHAU": {
+                name: "CHAUBEY SIR",
+                designation: "Class Teacher & Hindi Teacher",
+                theme: "chaos",
+                message: [
+                    "In the beautiful tapestry of Hindi, you've taught me that patience is the most elegant form of poetry.",
+                    "Thank you for weathering my chaos with a legendary smile and for guiding me through every mishap.",
+                    "I may be the 'clumsy plumsy' of the class, but I'm eternally lucky to have you as my anchor."
+                ],
+                specialSection: { type: "funny", content: "Incident Report: Naughty Boy detected. Verdict: Still tolerated by the legend, Chaubey Sir. 😂" },
+                emojiSet: ["📚", "🧡", "✍️", "😭", "😂"]
+            },
+            "RDSH": {
+                name: "R.D. SHARMA SIR",
+                designation: "Chemistry Teacher",
+                theme: "elegant-science",
+                message: [
+                    "Your dedication to the science of Chemistry is a testament to the power of academic rigor.",
+                    "Thank you for instilling in us a sense of precision and a deep respect for the truth of science.",
+                    "We appreciate the depth of knowledge you share and the standards of excellence you set."
+                ],
+                specialLine: "Science is not just about answers. It's about understanding why.",
+                emojiSet: ["🧪", "🔬", "📖", "✨", "📐"]
+            },
+            "RSGU": {
+                name: "R.S. GUPTA SIR",
+                designation: "Computer Teacher",
+                theme: "retro",
+                message: [
+                    "In an era of fleeting trends, your timeless approach to computing is the stable OS we all need.",
+                    "Thank you for teaching us that the most complex systems are only as strong as their foundations.",
+                    "You've shown us that true technology is not just about code, but about the logic of a disciplined mind."
+                ],
+                specialSection: { type: "funny", content: "System Update: User 'Ghazi' has successfully installed 'Eternal Respect' for Gupta Sir. 💾" },
+                emojiSet: ["💻", "⌨️", "💾", "🕹️", "⚡"]
+            },
+            "ANKH": {
+                name: "ANAND KHARE SIR",
+                designation: "Maths Teacher",
+                theme: "maths",
+                message: [
+                    "To the mentor who proves that every complex problem in life has a logical solution if you look close enough.",
+                    "Your clever approach to Mathematics has taught us to see the hidden patterns in the world around us.",
+                    "Thank you for the challenges that made us grow and the logic that made us think."
+                ],
+                specialLine: "This message has been carefully calculated for maximum gratitude.",
+                emojiSet: ["📐", "∑", "🔢", "🎯", "✨"]
+            },
+            "ANSU": {
+                name: "ANSHUL MA'AM",
+                designation: "SST Teacher",
+                theme: "history",
+                message: [
+                    "Your soft-spoken grace turns the study of history and geography into a poetic journey through time.",
+                    "Thank you for bringing the world to our classroom with such gentle guidance and positive energy.",
+                    "We truly appreciate the calm sanctuary you create, making every lesson a moment of peace."
+                ],
+                specialLine: "A gentle soul guiding us through the stories of our ancestors.",
+                emojiSet: ["🌍", "🗺️", "📜", "🌿", "🕯️"]
+            },
+            "YASM": {
+                name: "YASMEEN MA'AM",
+                designation: "Economics & Geography Teacher",
+                theme: "journey",
+                message: [
+                    "You are more than a teacher; you are a guardian whose support provides the map we use to navigate life.",
+                    "Your guidance in Economics and Geography has expanded our horizons beyond the walls of this school.",
+                    "Thank you for being a source of strength and a light that we can always look up to."
+                ],
+                specialLine: "Some teachers teach us subjects. Some help us find our direction.",
+                emojiSet: ["🌍", "🌟", "🕊️", "💖", "🗺️"]
+            },
+            "ASHI": {
+                name: "ASHIF SIR",
+                designation: "Director",
+                theme: "leadership",
+                message: [
+                    "Your visionary leadership is the engine that drives this institution toward a future of excellence.",
+                    "Thank you for your dedication to progress and for steering us with a refined and modern energy.",
+                    "We appreciate the direction you provide, ensuring that we don't just learn, but we evolve."
+                ],
+                specialLine: "Visionary leadership for a generation of achievers.",
+                emojiSet: ["🏢", "✨", "🎓", "💼", "🌟"]
+            },
+            "MONI": {
+                name: "MONICA GUPTA MA'AM",
+                designation: "Principal",
+                theme: "excellence",
+                message: [
+                    "Your leadership is the bedrock upon which every student's success in this school is built.",
+                    "Thank you for the unwavering discipline and the commitment to excellence that defines our journey.",
+                    "We are grateful for the environment of growth and the standard of integrity you cultivate for us all."
+                ],
+                specialLine: "The pillar of strength and the ultimate guardian of our institution.",
+                emojiSet: ["🏛️", "🌟", "🎓", "👑", "📜"]
+            }
+        };
+
+        const THEME_CONFIG = {
+            physics: { color: '#00f2ff', particles: 'orbit', bg: '#02020a' },
+            economics: { color: '#7aa2f7', particles: 'grid', bg: '#0a0a0f' },
+            english: { color: '#a8ffde', particles: 'aura', bg: '#040a0a' },
+            nature: { color: '#99ff99', particles: 'leaves', bg: '#040a04' },
+            coordinator: { color: '#ff00ff', particles: 'chaos', bg: '#0a000a' },
+            precision: { color: '#ffffff', particles: 'alignment', bg: '#050505' },
+            chemistry: { color: '#ffcc00', particles: 'molecules', bg: '#0a0a0a' },
+            chaos: { color: '#ff4444', particles: 'glitch', bg: '#0a0000' },
+            'elegant-science': { color: '#e0e0e0', particles: 'dust', bg: '#050505' },
+            retro: { color: '#00ff00', particles: 'pixel', bg: '#000000' },
+            maths: { color: '#ff8800', particles: 'geo', bg: '#050505' },
+            history: { color: '#d2b48c', particles: 'sepia', bg: '#0a0a0a' },
+            journey: { color: '#ffaa00', particles: 'path', bg: '#0a0a0a' },
+            leadership: { color: '#ffffff', particles: 'architect', bg: '#000000' },
+            excellence: { color: '#d4af37', particles: 'gold', bg: '#000000' }
+        };
+
+        class SceneManager {
+            constructor() {
+                this.currentScene = null;
+                this.scenes = {
+                    intro: document.getElementById('scene-intro'),
+                    entry: document.getElementById('scene-entry'),
+                    reveal: document.getElementById('scene-reveal')
+                };
+            }
+            async transitionTo(sceneId) {
+                const nextScene = this.scenes[sceneId];
+                if (!nextScene) return;
+                if (this.currentScene) {
+                    this.currentScene.classList.remove('active');
+                    await new Promise(r => setTimeout(r, 1500));
+                }
+                this.currentScene = nextScene;
+                nextScene.classList.add('active');
+            }
+        }
+        const sm = new SceneManager();
+
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('canvas-bg');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.mode = 'dust';
+                this.color = '#ffffff';
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            setMode(mode, color) {
+                this.mode = mode;
+                this.color = color;
+                this.particles = [];
+                this.init();
+            }
+            init() {
+                const count = this.mode === 'orbit' ? 80 : 150;
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2 + 1,
+                        speedX: (Math.random() - 0.5) * 0.5,
+                        speedY: (Math.random() - 0.5) * 0.5,
+                        angle: Math.random() * Math.PI * 2,
+                        radius: Math.random() * 150 + 50
+                    });
+                }
+            }
+            update() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = this.color;
+                this.ctx.globalAlpha = 0.4;
+                this.particles.forEach(p => {
+                    if (this.mode === 'orbit') {
+                        p.angle += 0.008;
+                        p.x = this.canvas.width / 2 + Math.cos(p.angle) * p.radius;
+                        p.y = this.canvas.height / 2 + Math.sin(p.angle) * p.radius;
+                    } else if (this.mode === 'leaves') {
+                        p.y += p.speedY * 2;
+                        p.x += Math.sin(p.angle) * 0.7;
+                        p.angle += 0.02;
+                        if (p.y > this.canvas.height) p.y = -10;
+                    } else {
+                        p.x += p.speedX;
+                        p.y += p.speedY;
+                        if (p.x < 0 || p.x > this.canvas.width) p.speedX *= -1;
+                        if (p.y < 0 || p.y > this.canvas.height) p.speedY *= -1;
+                    }
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                requestAnimationFrame(() => this.update());
+            }
+        }
+        const ps = new ParticleSystem();
+        ps.setMode('dust', '#ffffff');
+        ps.update();
+
+        // Cursor Glow Effect
+        window.addEventListener('mousemove', (e) => {
+            gsap.to('#cursor-glow', { x: e.clientX, y: e.clientY, duration: 0.8, ease: "power2.out" });
+        });
+
+        const audio = {
+            enabled: false,
+            element: document.getElementById('bg-music'),
+            toggle() {
+                this.enabled = !this.enabled;
+                document.getElementById('sound-text').innerText = this.enabled ? '♪ Sound On' : '♪ Sound Off';
+                if (this.enabled) this.element.play().catch(e => {}); else this.element.pause();
+            }
+        };
+        document.getElementById('sound-toggle').addEventListener('click', () => audio.toggle());
+
+        async function startExperience() {
+            await sm.transitionTo('intro');
+            const tl = gsap.timeline();
+            tl.to('#intro-1', { opacity: 0.7, duration: 2 })
+              .to('#intro-1', { opacity: 0, duration: 1 }, "+=2")
+              .to('#intro-2', { opacity: 0.7, duration: 2 })
+              .to('#intro-2', { opacity: 0, duration: 1 }, "+=2")
+              .to('#intro-3', { opacity: 0.7, duration: 2 })
+              .to('#intro-3', { opacity: 0, duration: 1 }, "+=2")
+              .to('#intro-4', { opacity: 0.7, duration: 2 })
+              .to('#intro-4', { opacity: 0, duration: 1 }, "+=3");
+
+            await tl;
+            await sm.transitionTo('entry');
+        }
+
+        async function revealTeacher(code) {
+            const teacher = TEACHERS[code.toUpperCase()];
+            if (!teacher) {
+                alert("Invalid Code. Please try again.");
+                return;
+            }
+
+            const theme = THEME_CONFIG[teacher.theme] || THEME_CONFIG.excellence;
+            document.documentElement.style.setProperty('--bg-color', theme.bg);
+            document.documentElement.style.setProperty('--accent-color', theme.color);
+            ps.setMode(theme.particles, theme.color);
+
+            // CINEMATIC TRANSITION: Code -> Point -> Bloom
+            const boxes = document.querySelectorAll('.code-box');
+            const tlTransition = gsap.timeline();
+            tlTransition.to(boxes, {
+                scale: 0,
+                x: (i) => (window.innerWidth / 2) - (boxes[i].getBoundingClientRect().left + 30),
+                y: (i) => (window.innerHeight / 2) - (boxes[i].getBoundingClientRect().top + 37),
+                opacity: 0,
+                duration: 0.8,
+                stagger: 0.05,
+                ease: "power4.in"
+            });
+
+            await tlTransition;
+
+            // Flash / Bloom
+            const flash = document.createElement('div');
+            flash.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:100; pointer-events:none; opacity:0;";
+            document.body.appendChild(flash);
+            gsap.to(flash, { opacity: 1, duration: 0.2, onComplete: () => {
+                gsap.to(flash, { opacity: 0, duration: 1, onComplete: () => flash.remove() });
+            }});
+
+            await sm.transitionTo('reveal');
+
+            // Teacher Reveal Sequence
+            const tName = document.getElementById('t-name');
+            const tDes = document.getElementById('t-designation');
+            tName.innerText = teacher.name;
+            tDes.innerText = teacher.designation;
+
+            const tlReveal = gsap.timeline();
+            tlReveal.fromTo(tName, { scale: 0.9, opacity: 0, y: 30 }, { scale: 1, opacity: 1, y: 0, duration: 2, ease: "elastic.out(1, 0.75)" });
+            tlReveal.to(tDes, { opacity: 0.6, duration: 1 }, "+=0.5");
+
+            // Confetti
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [theme.color, '#ffffff', '#d4af37'] });
+
+            // Message Reveal
+            const msgContainer = document.getElementById('t-messages');
+            msgContainer.innerHTML = '';
+            teacher.message.forEach((line, i) => {
+                const span = document.createElement('span');
+                span.className = 'message-line';
+                span.innerText = line;
+                msgContainer.appendChild(span);
+                tlReveal.to(span, { opacity: 1, y: 0, duration: 1.5, ease: "power2.out" }, `msg${i}`);
+            });
+
+            if (teacher.specialLine) {
+                const spec = document.getElementById('t-special');
+                spec.classList.remove('hidden');
+                spec.innerText = teacher.specialLine;
+                tlReveal.to(spec, { opacity: 1, duration: 1 }, "+=0.5");
+            } else if (teacher.specialSection) {
+                const spec = document.getElementById('t-special');
+                spec.classList.remove('hidden');
+                spec.innerText = teacher.specialSection.content;
+                tlReveal.to(spec, { opacity: 1, duration: 1 }, "+=0.5");
+            }
+
+            tlReveal.to('#t-final', { opacity: 1, y: 0, duration: 2 }, "+=1");
+        }
+
+        // Code Entry Logic
+        const inputs = document.querySelectorAll('.code-box');
+        inputs.forEach((input, i) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value && i < inputs.length - 1) inputs[i+1].focus();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && i > 0) inputs[i-1].focus();
+            });
+        });
+
+        document.getElementById('reveal-btn').addEventListener('click', () => {
+            const code = Array.from(inputs).map(i => i.value).join('');
+            if (code.length === 4) revealTeacher(code);
+        });
+
+        document.getElementById('skip-to-qr').addEventListener('click', () => {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('teacher');
+            if (code) revealTeacher(code);
+            else alert("No QR access detected.");
+        });
+
+        function initAdmin() {
+            const grid = document.getElementById('admin-grid');
+            grid.innerHTML = '';
+            Object.entries(TEACHERS).forEach(([code, data]) => {
+                const card = document.createElement('div');
+                card.className = 'admin-card';
+                card.innerHTML = `<h3 class="gold-text">${data.name}</h3><p>${data.designation}</p><div class="qr-code" id="qr-${code}"></div><button class="btn-luxury" style="width:auto" onclick="window.print()">Print QR</button>`;
+                grid.appendChild(card);
+                new QRCode(document.getElementById(`qr-${code}`), { text: `${window.location.origin}${window.location.pathname}?teacher=${code}`, width: 150, height: 150 });
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('teacher');
+            if (code) {
+                // Direct QR Access: Shortened Intro -> Reveal
+                await sm.transitionTo('intro');
+                gsap.to('#intro-3', { opacity: 0.7, duration: 2 });
+                await new Promise(r => setTimeout(r, 3000));
+                revealTeacher(code);
+            } else {
+                await startExperience();
+            }
+        });
+
+        if (window.location.hash === '#admin') {
+            document.getElementById('admin-view').style.display = 'block';
+            initAdmin();
+        }
+    </script>
+</body>
+</html>
